@@ -18,7 +18,7 @@ defaults.extensions = {
 -- least lazily ?
 
 local function set_defaults_extension(name, user_defaults)
-  local loaded, ext = pcall(require, 'notifier.extensions.'..name)
+  local loaded, ext = pcall(require, 'notifier.extensions.' .. name)
 
   if loaded then
     pcall(ext.set_defaults, user_defaults)

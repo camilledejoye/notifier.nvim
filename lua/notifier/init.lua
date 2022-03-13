@@ -19,7 +19,7 @@ function notifier.setup(opts)
   end
 
   for name, ext_opts in pairs(config.extensions or {}) do
-    local loaded, extension = pcall(require, 'notifier.extensions.'..name)
+    local loaded, extension = pcall(require, 'notifier.extensions.' .. name)
 
     if loaded then
       pcall(extension.setup, config, ext_opts)

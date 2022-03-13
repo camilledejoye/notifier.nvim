@@ -22,51 +22,49 @@
 -- Duplicate from /usr/share/nvim/runtime/lua/vim/lsp/util.lua
 -- Because I need the token and done status but Neovim does not return it
 local function get_progress_messages()
-
   local new_messages = {}
   local msg_remove = {}
   local progress_remove = {}
 
   for _, client in ipairs(vim.lsp.get_active_clients()) do
-      local messages = client.messages
-      local data = messages
-      for token, ctx in pairs(data.progress) do
+    local messages = client.messages
+    local data = messages
+    for token, ctx in pairs(data.progress) do
+      local new_report = {
+        name = data.name,
+        title = ctx.title or 'empty title',
+        message = ctx.message,
+        percentage = ctx.percentage,
+        progress = true,
+        token = token,
+        done = ctx.done,
+      }
+      table.insert(new_messages, new_report)
 
-        local new_report = {
-          name = data.name,
-          title = ctx.title or "empty title",
-          message = ctx.message,
-          percentage = ctx.percentage,
-          progress = true,
-          token = token,
-          done = ctx.done,
-        }
-        table.insert(new_messages, new_report)
+      if ctx.done then
+        table.insert(progress_remove, { client = client, token = token })
+      end
+    end
 
-        if ctx.done then
-          table.insert(progress_remove, {client = client, token = token})
+    for i, msg in ipairs(data.messages) do
+      if msg.show_once then
+        msg.shown = msg.shown + 1
+        if msg.shown > 1 then
+          table.insert(msg_remove, { client = client, idx = i })
         end
       end
 
-      for i, msg in ipairs(data.messages) do
-        if msg.show_once then
-          msg.shown = msg.shown + 1
-          if msg.shown > 1 then
-            table.insert(msg_remove, {client = client, idx = i})
-          end
-        end
+      table.insert(new_messages, { name = data.name, content = msg.content })
+    end
 
-        table.insert(new_messages, {name = data.name, content = msg.content})
-      end
-
-      if next(data.status) ~= nil then
-        table.insert(new_messages, {
-          name = data.name,
-          content = data.status.content,
-          uri = data.status.uri,
-          status = true
-        })
-      end
+    if next(data.status) ~= nil then
+      table.insert(new_messages, {
+        name = data.name,
+        content = data.status.content,
+        uri = data.status.uri,
+        status = true,
+      })
+    end
     for _, item in ipairs(msg_remove) do
       table.remove(client.messages, item.idx)
     end
@@ -126,8 +124,7 @@ end
 ---@return NotificationOpts opts
 ---@see vim.notifiy(msg, log_level, opts)
 function lsp.make_notify_params(message)
-  local summary = 'empty title' == (message.title or 'empty title')
-    and message.name
+  local summary = 'empty title' == (message.title or 'empty title') and message.name
     or ('[%s] %s'):format(message.name, message.title)
   local body = message.message or (message.done and 'Done') or message.content
   local replaces_id = message.token and notification_ids[message.token] or 0

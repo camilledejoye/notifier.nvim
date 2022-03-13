@@ -5,9 +5,7 @@ function gdbus.notify(msg, log_level, opts)
   log_level = log_level or 2
   opts = opts or {}
   -- Match vim.lsp.log_levels to notify-send urgency
-  local urgency = log_level < 2 and 1
-    or log_level < 3 and 2
-    or 3
+  local urgency = log_level < 2 and 1 or log_level < 3 and 2 or 3
   local timeout = -1 -- In ms, 0 = never expire, -1 = default server configuration
   local summary = opts.summary or msg
   local body = opts.summary and msg or nil
@@ -17,8 +15,7 @@ function gdbus.notify(msg, log_level, opts)
 
       for key, value in pairs(self) do
         if 'format' ~= key then
-          local item = 'number' == type(value)
-            and ('"%s": <int32 %d>'):format(key, value)
+          local item = 'number' == type(value) and ('"%s": <int32 %d>'):format(key, value)
             or ('"%s": <"%s">'):format(key, value)
           table.insert(items, item)
         end
@@ -55,10 +52,12 @@ function gdbus.notify(msg, log_level, opts)
   }
 
   -- Prevent the cursor from blinking on each notification
-  local output = require('plenary.job'):new({
-    command = 'gdbus',
-    args = args,
-  }):sync()
+  local output = require('plenary.job')
+    :new({
+      command = 'gdbus',
+      args = args,
+    })
+    :sync()
 
   return output[1]:match('uint32 (%d+)')
 end
